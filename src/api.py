@@ -5,23 +5,17 @@ from typing import Any
 
 import requests
 
+from src.abc_api import BaseJobAPI
 
-class HeadHunterAPI:
+
+class HeadHunterAPI(BaseJobAPI):
     """Класс для получения данных с публичного API hh.ru."""
 
     BASE_URL: str = "https://api.hh.ru"
 
-    @staticmethod
-    def get_employer_data(employer_id: Any) -> Any:
-        """Получает данные о компании по её идентификатору.
-
-        Args:
-            employer_id: ID компании на hh.ru
-
-        Returns:
-            dict с данными компании или None, если компания не найдена
-        """
-        url = f"{HeadHunterAPI.BASE_URL}/employers/{employer_id}"
+    def get_employer_data(self, employer_id: Any) -> Any:
+        """Получает данные о компании по её идентификатору."""
+        url = f"{self.BASE_URL}/employers/{employer_id}"
 
         try:
             response = requests.get(url)
@@ -37,19 +31,10 @@ class HeadHunterAPI:
             print(f"  ❌ Ошибка при получении данных компании {employer_id}: {e}")
             return None
 
-    @staticmethod
-    def get_vacancies_from_employer(employer_id: int, page: int = 0) -> Any:
-        """Получает список вакансий для конкретной компании с указанной страницы.
-
-        Args:
-            employer_id: ID компании на hh.ru
-            page: Номер страницы (начиная с 0)
-
-        Returns:
-            Список вакансий с текущей страницы
-        """
-        url = f"{HeadHunterAPI.BASE_URL}/vacancies"
-        params = {"employer_id": employer_id, "page": page, "per_page": 20, "area": 113}  # Максимум 100  # Россия
+    def get_vacancies_from_employer(self, employer_id: int, page: int = 0) -> Any:
+        """Получает список вакансий для конкретной компании с указанной страницы."""
+        url = f"{self.BASE_URL}/vacancies"
+        params = {"employer_id": employer_id, "page": page, "per_page": 20, "area": 113}
 
         try:
             response = requests.get(url, params=params)
@@ -66,46 +51,28 @@ class HeadHunterAPI:
             return []
 
     def get_all_vacancies_for_employer(self, employer_id: Any, max_pages: int = 5) -> Any:
-        """Получает ВСЕ вакансии компании с учетом пагинации.
-
-        Args:
-            employer_id: ID компании на hh.ru
-            max_pages: Максимальное количество страниц для загрузки
-
-        Returns:
-            Полный список всех вакансий компании
-        """
+        """Получает ВСЕ вакансии компании с учетом пагинации."""
         all_vacancies = []
 
         for page in range(max_pages):
-            # Используем существующий метод для получения страницы
             vacancies = self.get_vacancies_from_employer(employer_id, page)
 
-            if not vacancies:  # Если вакансий больше нет
+            if not vacancies:
                 break
 
             all_vacancies.extend(vacancies)
             print(f"    Загружена страница {page + 1}: {len(vacancies)} вакансий")
 
-            # Задержка чтобы не нагружать API
             time.sleep(0.3)
 
-            # Если получили меньше, чем per_page, значит это последняя страница
             if len(vacancies) < 20:
                 break
 
         return all_vacancies
 
     def search_employers(self, query: Any) -> Any:
-        """Поиск компаний по названию.
-
-        Args:
-            query: Название компании для поиска
-
-        Returns:
-            Список найденных компаний
-        """
-        url = f"{HeadHunterAPI.BASE_URL}/employers"
+        """Поиск компаний по названию (специфичный для hh.ru метод)."""
+        url = f"{self.BASE_URL}/employers"
         params = {"text": query, "area": 113, "per_page": 10}
 
         try:

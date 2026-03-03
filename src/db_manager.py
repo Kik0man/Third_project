@@ -5,10 +5,11 @@ from typing import Any
 import psycopg2
 from psycopg2.extensions import connection, cursor
 
+from src.abc_storage import BaseStorage
 from src.config import DB_CONFIG
 
 
-class DBManager:
+class DBManager(BaseStorage):
     """Класс для управления данными в БД PostgreSQL."""
 
     def __init__(self) -> None:
